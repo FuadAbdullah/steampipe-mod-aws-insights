@@ -108,6 +108,15 @@ dashboard "backup_plan_detail" {
 
     }
 
+    container {
+
+      table {
+        title = "Resource Assignments"
+        query = query.backup_resource_assignments
+        args  = [self.input.backup_plan_arn.value]
+      }
+
+    }
   }
 
 }
@@ -226,5 +235,29 @@ query "backup_plan_rules" {
       account_id = split_part($1, ':', 5)
       and region = split_part($1, ':', 4)
       and arn = $1;
+  EOQ
+}
+
+query "backup_resource_assignments" {
+  sql = <<-EOQ
+    select
+      arn as "ARN",
+      title as "Title",
+      selection_name as "Name",
+      creation_date as "Creation Date",
+      account_id as "Account ID",
+      region as "Region",
+      resources as "Resource ID",
+      (
+        select jsonb_object_agg(key, value)
+        from jsonb_each(conditions)
+        where jsonb_typeof(value) = 'array' 
+          and jsonb_array_length(value) > 0
+      ) as "Conditions",
+      not_resources as "Not Resources"
+    from
+      aws_backup_selection
+    where
+      arn LIKE '%' || $1 || '%'
   EOQ
 }
