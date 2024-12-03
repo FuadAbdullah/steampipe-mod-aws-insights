@@ -55,7 +55,8 @@ node "backup_selection" {
         'Name', selection_name,
         'Creation Date', creation_date,
         'Account ID', account_id,
-        'Region', region
+        'Region', region,
+        'Resources', jsonb_pretty(resources)
       ) as properties
     from
       aws_backup_selection
