@@ -97,6 +97,11 @@ dashboard "ec2_application_load_balancer_detail" {
     args  = [self.input.alb.value]
   }
 
+  with "wafv2_web_acl_for_ec2_application_load_balancer" {
+    query = query.wafv2_web_acl_for_ec2_application_load_balancer
+    args  = [self.input.alb.value]
+  }
+
   container {
     graph {
       title = "Relationships"
@@ -145,6 +150,13 @@ dashboard "ec2_application_load_balancer_detail" {
       }
 
       node {
+        base = node.wafv2_web_acl
+        args = {
+          wafv2_acl_arns = with.wafv2_web_acl_for_ec2_application_load_balancer.rows[*].web_acl_arn
+        }
+      }
+
+      node {
         base = node.s3_bucket
         args = {
           s3_bucket_arns = with.s3_buckets_for_ec2_application_load_balancer.rows[*].bucket_arn
@@ -188,6 +200,13 @@ dashboard "ec2_application_load_balancer_detail" {
 
       edge {
         base = edge.ec2_application_load_balancer_to_ec2_target_group
+        args = {
+          ec2_application_load_balancer_arns = [self.input.alb.value]
+        }
+      }
+
+      edge {
+        base = edge.ec2_application_load_balancer_to_wafv2
         args = {
           ec2_application_load_balancer_arns = [self.input.alb.value]
         }
@@ -410,6 +429,22 @@ query "vpc_vpcs_for_ec2_application_load_balancer" {
       alb.arn = $1;
   EOQ
 }
+
+query "wafv2_web_acl_for_ec2_application_load_balancer" {
+  sql = <<-EOQ
+    select
+      wafv2.arn as web_acl_arn
+    from
+      aws_wafv2_web_acl as wafv2
+    where
+      $1 in
+      (
+        select
+          jsonb_array_elements_text(wafv2.associated_resources)
+      );
+  EOQ
+}
+
 
 # Card queries
 

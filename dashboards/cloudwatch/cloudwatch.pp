@@ -4,6 +4,13 @@ locals {
   }
 }
 
+category "cloudwatch_alarms" {
+  title = "CloudWatch Alarms"
+  color = local.management_governance_color
+  href  = "/aws_insights.dashboard.cloudwatch_alarms_detail"
+  icon  = "library_books"
+}
+
 category "cloudwatch_log_group" {
   title = "CloudWatch Log Group"
   color = local.management_governance_color

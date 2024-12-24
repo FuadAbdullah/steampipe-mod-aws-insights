@@ -14,15 +14,7 @@ node "wafv2_web_acl" {
     from
       aws_wafv2_web_acl
     where
-      arn in
-      (
-        select
-          web_acl_id
-        from
-          aws_cloudfront_distribution
-        where
-          arn = any($1)
-      );
+      arn = any($1)
   EOQ
 
   param "wafv2_acl_arns" {}

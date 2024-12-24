@@ -64,6 +64,24 @@ edge "ec2_application_load_balancer_to_ec2_target_group" {
   param "ec2_application_load_balancer_arns" {}
 }
 
+edge "ec2_application_load_balancer_to_wafv2" {
+  title = "shielded by"
+
+  sql = <<-EOQ
+    select
+      lb_arns as from_id,
+      wafv2.arn as to_id
+    from
+      aws_wafv2_web_acl as wafv2,
+      jsonb_array_elements_text(wafv2.associated_resources) as lb_arns
+    where
+      lb_arns = any($1)
+  EOQ
+
+  param "ec2_application_load_balancer_arns" {}
+}
+
+
 edge "ec2_application_load_balancer_to_s3_bucket" {
   title = "logs to"
 

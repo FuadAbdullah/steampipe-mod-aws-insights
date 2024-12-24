@@ -14,3 +14,12 @@
 # Powerpipe variable files
 *.ppvars
 *.auto.ppvars
+
+# Powerpipe mod files
+.mod.cache.json
+.powerpipe
+.powerpipe/
+
+# Test files exclusion
+test_files
+test_files/*
