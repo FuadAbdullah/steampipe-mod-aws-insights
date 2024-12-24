@@ -254,6 +254,16 @@ dashboard "sns_topic_detail" {
       }
     }
 
+    container {
+      width = 12
+
+      table {
+        title = "Topic Subscriptions"
+        query = query.sns_topic_subscriptions
+        args = [self.input.topic_arn.value]
+      }
+    }
+
   }
 }
 
@@ -538,3 +548,20 @@ query "sns_topic_delivery_policy" {
 
 }
 
+query "sns_topic_subscriptions" {
+  sql = <<-EOQ
+    select 
+      ts.subscription_arn as "Subscription ARN",
+      ts.protocol as "Protocol",
+      ts.pending_confirmation as "Pending Confirmation",
+      ts.owner as "Owner",
+      ts.endpoint as "Endpoint",
+      ts.confirmation_was_authenticated as "Confirmation was authenticated?"
+    from
+      aws_sns_topic_subscription as ts
+    where
+      ts.topic_arn = $1
+      and ts.account_id = split_part($1, ':', 5)
+      and ts.region = split_part($1, ':', 4)
+  EOQ
+}
