@@ -242,7 +242,6 @@ query "backup_resource_assignments" {
   sql = <<-EOQ
     select
       arn as "ARN",
-      title as "Title",
       selection_name as "Name",
       creation_date as "Creation Date",
       account_id as "Account ID",
