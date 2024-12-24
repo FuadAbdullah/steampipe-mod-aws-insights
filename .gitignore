@@ -23,3 +23,4 @@
 # Test files exclusion
 test_files
 test_files/*
+run2.sh
