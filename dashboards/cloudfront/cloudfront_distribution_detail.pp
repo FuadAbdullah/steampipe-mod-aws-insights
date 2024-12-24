@@ -159,7 +159,7 @@ dashboard "cloudfront_distribution_detail" {
   container {
 
     container {
-      width = 6
+      width = 12
 
       table {
         title = "Overview"
@@ -177,16 +177,33 @@ dashboard "cloudfront_distribution_detail" {
         args  = [self.input.distribution_arn.value]
 
       }
-    }
-    container {
-      width = 6
 
       table {
+        title = "Aliases"
+        type  = "line"
+        width = 6
+        query = query.cloudfront_distribution_aliases
+        args  = [self.input.distribution_arn.value]
+      }
+    
+      table {
         title = "Restrictions"
+        width = 6
         query = query.cloudfront_distribution_restrictions
         args  = [self.input.distribution_arn.value]
       }
     }
+
+    container {
+      width = 12
+
+      table {
+        title = "Origins"
+        query = query.cloudfront_distribution_origins
+        args  = [self.input.distribution_arn.value]
+      }
+    }
+    
   }
 }
 
@@ -299,23 +316,16 @@ query "s3_buckets_for_cloudfront_distribution" {
 
 query "wafv2_web_acls_for_cloudfront_distribution" {
   sql = <<-EOQ
-    with cloudfront_web_acl as (
-      select
-        web_acl_id
-      from
-        aws_cloudfront_distribution
-      where
-        arn = $1
-        and account_id = split_part($1,':',5)
-    )
     select
-      waf.arn as wafv2_acl_arn
+      wafv2.arn as wafv2_acl_arn
     from
-      aws_wafv2_web_acl waf
-    join
-      cloudfront_web_acl cwa on waf.arn = cwa.web_acl_id
+      aws_wafv2_web_acl as wafv2
     where
-    account_id = split_part($1,':',5);
+      $1 in
+      (
+        select
+          jsonb_array_elements_text(wafv2.associated_resources)
+      )
   EOQ
 } 
 
@@ -437,5 +447,35 @@ query "cloudfront_distribution_restrictions" {
     where
       arn = $1
       and account_id = split_part($1,':',5);
+  EOQ
+}
+
+query "cloudfront_distribution_origins" {
+  sql = <<-EOQ
+    select
+      jsonb_array_elements(origins) -> 'Id' as "Origin ID",
+      jsonb_array_elements(origins) -> 'DomainName' as "Domain Name",
+      jsonb_array_elements(origins) -> 'OriginPath' as "Origin Path",
+      (jsonb_array_elements(origins) -> 'OriginShield' -> 'Enabled')::boolean as "Shield is enabled?",
+      jsonb_array_elements(origins) -> 'ConnectionAttempts' as "Connection Attempts",
+      jsonb_array_elements(origins) -> 'ConnectionTimeout' as "Connection Timeout"
+    from
+      aws_cloudfront_distribution
+    where
+      arn = $1
+      and account_id = split_part($1, ':', 5)
+  EOQ
+}
+
+query "cloudfront_distribution_aliases" {
+  sql = <<-EOQ
+    select
+      alias as name
+    from
+      aws_cloudfront_distribution,
+      jsonb_array_elements(aliases -> 'Items') as alias
+    where
+      arn = $1
+      and account_id = split_part($1, ':', 5)
   EOQ
 }

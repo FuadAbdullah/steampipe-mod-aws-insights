@@ -14,7 +14,7 @@ edge "cloudfront_distribution_to_acm_certificate" {
 }
 
 edge "cloudfront_distribution_to_wafv2_web_acl" {
-  title = "web acl"
+  title = "shielded by"
 
   sql = <<-EOQ
     select
